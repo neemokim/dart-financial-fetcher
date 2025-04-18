@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 # (주) 등 제거
 def process_corp_info(df):
     cleaned_names = df.iloc[:, 0].str.replace(r"[\(주\)\s]|주식회사", "", regex=True)
-    excluded_names = df.iloc[:, 0].str.extract(r"(\(주\)|주식회사)").dropna().unique().flatten()
+    excluded_names = df.iloc[:, 0].str.extract(r"(\(주\)|주식회사)")[0].dropna().unique().flatten()
     return cleaned_names, excluded_names
 
 # DART 전체 기업 목록에서 사업자명 매칭
