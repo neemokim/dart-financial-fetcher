@@ -21,8 +21,23 @@ def get_dart_report_data(cleaned_names, year, report_type, api_key):
     # 기업 리스트 가져오기 (파일 저장 없이 바로 파싱)
     url = f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}"
     response = requests.get(url)
-    root = ET.fromstring(response.content)  # ✅ 바로 content로 파싱
 
+    # 먼저 텍스트로 읽고, 정상적인 XML인지 확인
+    text = response.content.decode("utf-8", errors="ignore").strip()
+
+    # XML이 아닌 경우 에러 반환
+    if not text.startswith("<?xml"):
+        raise ValueError(f"DART에서 받은 기업목록 응답이 XML 형식이 아님:\n{text[:100]}...")
+
+    # XML 파싱
+    root = ET.fromstring(response.content)
+
+
+
+
+
+
+    
     corp_list = []
     for corp in root.iter("list"):
         corp_list.append({
