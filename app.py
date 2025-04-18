@@ -26,7 +26,7 @@ st.markdown("""
 """)
 
 api_key = st.secrets["OPEN_DART_API_KEY"]
-menu = st.sidebar.radio("기능 선택", ["📘 사업보고서 조회", "📕 외부감사보고서 조회"])
+menu = st.sidebar.radio("기능 선택", ["📘 사업보고서 조회", "📕 외부감사보고서 조회", "🕸 웹기반 외감보고서 조회"])
 
 # 공통 입력
 current_year = datetime.datetime.now().year
@@ -176,6 +176,40 @@ elif menu == "📕 외부감사보고서 조회":
         st.dataframe(result_df)
         st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="audit_report_results.csv")
 
+    else:
+        st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
+elif menu == "🕸 웹기반 외감보고서 조회":
+    st.header("🕸 웹 기반 외부감사보고서 조회")
+
+    uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
+    if uploaded_file:
+        if uploaded_file.name.endswith("csv"):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file)
+
+        cleaned, _ = process_corp_info(df)
+        st.write("🧹 정제된 기업명 (최대 5개):", cleaned[:5].tolist())
+
+        results = []
+        for i, name in enumerate(cleaned[:5]):
+            try:
+                rcp_no = get_latest_web_rcp_no(name)
+                pdf_url = get_pdf_download_url(rcp_no)
+                financials = parse_external_audit_pdf(pdf_url)
+            except Exception as e:
+                financials = {"오류": str(e)}
+
+            result = {"사업자명": name}
+            result.update(financials)
+            results.append(result)
+
+            st.write(f"✅ {name} 처리 완료")
+
+        result_df = pd.DataFrame(results)
+        st.success("🧾 전체 기업 처리 완료")
+        st.dataframe(result_df)
+        st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="웹기반_외감보고서결과.csv")
     else:
         st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
 
