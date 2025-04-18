@@ -2,6 +2,8 @@ import fitz  # PyMuPDF
 import re
 import requests
 import os
+from bs4 import BeautifulSoup
+
 
 # PDF에서 텍스트 추출
 def extract_text_from_pdf_url(pdf_url):
@@ -61,3 +63,25 @@ def parse_external_audit_pdf(pdf_url):
         return extract_financials_from_text(text)
     except Exception as e:
         return {"오류": str(e)}
+
+# rcp_no → 진짜 PDF 다운로드 URL 자동 추출 함수
+def get_pdf_download_url(rcp_no):
+    """
+    rcp_no를 이용해 DART 보고서 페이지를 열고, PDF 다운로드 링크를 추출한다.
+    """
+    base_url = f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcp_no}"
+    response = requests.get(base_url)
+    
+    if response.status_code != 200:
+        raise Exception("DART 보고서 본문 페이지 접근 실패")
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    
+    # PDF 링크 찾기 (첨부파일 섹션에서)
+    iframe = soup.find("iframe", {"id": "pdf"})
+    if iframe and "src" in iframe.attrs:
+        # 상대 경로일 경우 절대 경로로 바꿔주기
+        pdf_url = "https://dart.fss.or.kr" + iframe["src"]
+        return pdf_url
+    else:
+        raise Exception("PDF 링크를 찾을 수 없습니다.")
