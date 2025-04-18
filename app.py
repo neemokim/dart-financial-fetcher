@@ -13,6 +13,21 @@ from external_audit_parser import (
     get_latest_audit_rcp_no  # ✅ 이거 빠졌던 거야!
 )
 
+# 함수정의
+def read_uploaded_file(uploaded_file):
+    try:
+        if uploaded_file.name.endswith("csv"):
+            try:
+                return pd.read_csv(uploaded_file, encoding="utf-8")
+            except UnicodeDecodeError:
+                return pd.read_csv(uploaded_file, encoding="cp949")
+        else:
+            return pd.read_excel(uploaded_file)
+    except Exception as e:
+        st.error(f"❌ 파일을 읽을 수 없습니다: {e}")
+        st.stop()
+
+
 
 st.set_page_config(page_title="DART 재무정보 통합조회기", layout="wide")
 st.title("📊 DART 재무정보 통합조회기")
@@ -197,6 +212,10 @@ elif menu == "🕸 웹기반 외감보고서 조회":
 
         results = []
         for i, name in enumerate(cleaned[:5]):
+            corp_code = get_corp_code(name, corp_list_df)
+            if not corp_code:
+                results.append({"사업자명": name, "오류": "기업 코드 매칭 실패"})
+                continue
             try:
                 rcp_no = get_latest_web_rcp_no(name)
                 pdf_url = get_pdf_download_url(rcp_no)
