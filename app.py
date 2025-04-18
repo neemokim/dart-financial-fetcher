@@ -34,7 +34,7 @@ if menu == "📘 사업보고서 조회":
     st.header("📘 사업보고서 기반 일반 재무제표 조회")
 
     uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
-       if uploaded_file:
+        if uploaded_file:
         try:
             if uploaded_file.name.endswith("csv"):
                 try:
@@ -48,6 +48,7 @@ if menu == "📘 사업보고서 조회":
             st.stop()
     
         cleaned, excluded = process_corp_info(df)
+
 
 
         st.write("🧹 제거된 문자열 (최대 5개):", list(excluded)[:5])
