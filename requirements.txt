@@ -1,4 +1,4 @@
 streamlit
 pandas
 requests
-open_dart_reader
+opendartreader
