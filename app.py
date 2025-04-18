@@ -158,35 +158,64 @@ elif menu == "📕 외부감사보고서 조회":
 # ✅ 3. 웹기반 외감보고서 조회
 elif menu == "🕸 웹기반 외감보고서 조회":
     st.header("🕸 웹 기반 외부감사보고서 수치 조회")
-    uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
-    if uploaded_file:
-        df = read_uploaded_file(uploaded_file)
-        cleaned, _ = process_corp_info(df)
-        st.write("🧹 정제된 기업명 (최대 5개):", cleaned[:5].tolist())
+    st.info("웹 기반 외감보고서는 일부 기업만 지원되며, 추후 더 많은 기업 지원 예정입니다.")
 
-        results = []
-        for i, name in enumerate(cleaned[:5]):
-            corp_code = get_corp_code(name, corp_list_df)
-            if not corp_code:
-                results.append({"사업자명": name, "오류": "기업 코드 매칭 실패"})
-                continue
-            try:
-                rcp_no = get_latest_web_rcp_no(name)
-                if not rcp_no:
-                    raise ValueError("웹에서 외부감사보고서를 찾을 수 없습니다.")
-                pdf_url = get_pdf_download_url(rcp_no)
-                financials = parse_external_audit_pdf(pdf_url)
-            except Exception as e:
-                financials = {"오류": str(e)}
+   # uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
+   # if uploaded_file:
+   #     df = read_uploaded_file(uploaded_file)
+ 
+   #       cleaned, _ = process_corp_info(df)
+ 
+   #       st.write("🧹 정제된 기업명 (최대 5개):", cleaned[:5].tolist())
 
-            result = {"사업자명": name}
-            result.update(financials)
-            results.append(result)
-            st.write(f"✅ {name} 처리 완료")
+   #
+ 
+   #       results = []
+ 
+   #       for i, name in enumerate(cleaned[:5]):
+  
+   #          corp_code = get_corp_code(name, corp_list_df)
+   
+   #         if not corp_code:
+   
+   #             results.append({"사업자명": name, "오류": "기업 코드 매칭 실패"})
+   
+   #             continue
+   
+   #         try:
+   
+   #             rcp_no = get_latest_web_rcp_no(name)
+    
+   #            if not rcp_no:
+    
+   #                raise ValueError("웹에서 외부감사보고서를 찾을 수 없습니다.")
+   
+   #             pdf_url = get_pdf_download_url(rcp_no)
+     
+   #           financials = parse_external_audit_pdf(pdf_url)
+    
+   #        except Exception as e:
+     
+   #           financials = {"오류": str(e)}
 
-        result_df = pd.DataFrame(results)
-        st.success("✅ 웹기반 외감보고서 조회 완료")
-        st.dataframe(result_df)
-        st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="웹기반_외감보고서_결과.csv")
-    else:
-        st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
+    
+   #        result = {"사업자명": name}
+    
+   #        result.update(financials)
+    
+   #        results.append(result)
+    
+   #        st.write(f"✅ {name} 처리 완료")
+
+    
+   #    result_df = pd.DataFrame(results)
+   
+   #     st.success("✅ 웹기반 외감보고서 조회 완료")
+  
+   #      st.dataframe(result_df)
+   
+   #     st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="웹기반_외감보고서_결과.csv")
+
+   #    else:
+ 
+   #       st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
