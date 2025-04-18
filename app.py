@@ -120,19 +120,7 @@ elif menu == "📕 외부감사보고서 조회":
     st.header("📕 외부감사보고서 기반 PDF 재무 수치 조회")
     #st.subheader("🔍 지오영 수동 테스트 (테스트용 코드)")
     #corp_code = "00446716"
-    try:
-        rcp_no = get_latest_audit_rcp_no(corp_code, api_key)
-        st.write("📌 추출된 rcp_no:", rcp_no)
-
-        pdf_url = get_pdf_download_url(rcp_no)
-        st.write("📄 PDF URL:", pdf_url)
-
-        financials = parse_external_audit_pdf(pdf_url)
-        st.write("📊 추출된 재무정보:", financials)
-
-    except Exception as e:
-        st.error(f"❌ 에러 발생: {e}")
-
+   
     uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
     if uploaded_file:
         if uploaded_file.name.endswith("csv"):
