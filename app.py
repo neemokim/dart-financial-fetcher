@@ -31,12 +31,15 @@ api_key = st.secrets["OPEN_DART_API_KEY"]
 # 메뉴 선택
 menu = st.sidebar.radio("기능 선택", ["📘 사업보고서 조회", "📕 외부감사보고서 조회", "🕸 웹기반 외감보고서 조회"])
 
-# 연도 선택 (모든 메뉴 공통)
+# 메뉴 선택
+menu = st.sidebar.radio("기능 선택", ["📘 사업보고서 조회", "📕 외부감사보고서 조회", "🕸 웹기반 외감보고서 조회"])
+
+# ✅ 공통 연도 (라벨을 메뉴마다 안 바꾸고 하나만 쓰되, ID 충돌 안 나게 name 파라미터 제거)
 current_year = datetime.datetime.now().year
 year_options = [str(current_year - i) for i in range(3)]
-year = st.sidebar.selectbox("조회 연도", year_options, index=1)  # 기본값은 작년
+year = st.sidebar.selectbox("조회 연도", year_options, index=1, key="global_year")
 
-# 보고서 유형 (📘 사업보고서 조회 메뉴에서만 노출)
+# ✅ 보고서 유형은 '📘 사업보고서 조회'일 때만 노출
 report_types = {
     "사업보고서": "11011",
     "반기보고서": "11012",
@@ -44,9 +47,9 @@ report_types = {
     "3분기보고서": "11014"
 }
 if menu == "📘 사업보고서 조회":
-    report_type = st.sidebar.selectbox("보고서 유형", list(report_types.keys()))
+    report_type = st.sidebar.selectbox("보고서 유형", list(report_types.keys()), key="report_type")
 else:
-    report_type = "사업보고서"  # 기본값 고정 
+    report_type = "사업보고서"  # 내부적으로 고정값만 씀
 
 # 공통 입력
 current_year = datetime.datetime.now().year
