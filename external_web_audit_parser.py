@@ -2,6 +2,12 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+def clean_corp_name(name):
+    """
+    기업명에서 (주), 주식회사, ㈜, 유한회사 등 정리
+    """
+    return re.sub(r"\(주\)|주식회사|㈜|주\s*|유한회사|유\s*|\(유\)", "", name).strip()
+
 def get_latest_web_rcp_no(corp_name):
     """
     기업명을 기반으로 DART 웹에서 외부감사보고서의 rcpNo를 크롤링한다.
@@ -11,15 +17,27 @@ def get_latest_web_rcp_no(corp_name):
     resp = requests.get(search_url)
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # '보고서명'에 '외부감사' 포함된 것 중 가장 최근 rcpNo 찾기
+    # 입력값 정제
+    cleaned_input = clean_corp_name(corp_name)
+
+    # '보고서명'에 '감사' 포함된 것 중 가장 최근 rcpNo 찾기
     links = soup.select("a[href*='rcpNo']")
     for link in links:
         title = link.get_text()
-        if "외부감사" in title:
-            href = link["href"]
-            match = re.search(r"rcpNo=(\d+)", href)
-            if match:
-                return match.group(1)
+        if "감사" in title:
+            # 기업명 일치 여부 검사 (링크 주변 텍스트에서 추출)
+            parent = link.find_parent("td")
+            if parent:
+                corp_cell = parent.find_previous_sibling("td")
+                if corp_cell:
+                    listed_name = corp_cell.get_text(strip=True)
+                    if cleaned_input in clean_corp_name(listed_name):
+                        href = link["href"]
+                        match = re.search(r"rcpNo=(\d+)", href)
+                        if match:
+                            rcp_no = match.group(1)
+                            print(f"✅ rcpNo 추출 성공: {rcp_no}")
+                            return rcp_no
 
     raise Exception("웹에서 외부감사보고서를 찾을 수 없습니다.")
 
