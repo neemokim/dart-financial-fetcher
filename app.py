@@ -20,7 +20,8 @@ menu = st.sidebar.radio("기능 선택", ["📘 사업보고서 조회", "📕 �
 
 # 공통 입력
 current_year = datetime.datetime.now().year
-year = st.sidebar.selectbox("조회 연도", [str(current_year - i) for i in range(3)])
+year_options = [str(current_year - i) for i in range(3)]
+year = st.sidebar.selectbox("조회 연도", year_options, index=1)  # 기본값을 작년으로
 report_types = {
     "사업보고서": "11011",
     "반기보고서": "11012",
