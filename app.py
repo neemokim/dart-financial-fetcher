@@ -90,5 +90,45 @@ if menu == "📘 사업보고서 조회":
         st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
 
 elif menu == "📕 외부감사보고서 조회":
-    st.header("📕 외부감사보고서 기반 PDF/XBRL 수치 조회")
-    st.info("🚧 현재 개발 중입니다. 추후 업데이트 예정입니다.")
+    st.header("📕 외부감사보고서 기반 PDF 재무 수치 조회")
+
+    uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
+    if uploaded_file:
+        if uploaded_file.name.endswith("csv"):
+            df = pd.read_csv(uploaded_file)
+        else:
+            df = pd.read_excel(uploaded_file)
+
+        # 기업명 전처리
+        cleaned_names, _ = process_corp_info(df)
+        st.write("🧹 정제된 기업명 (최대 5개):", cleaned_names[:5].tolist())
+
+        results = []
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        total = min(len(cleaned_names), 5)
+
+        for i, name in enumerate(cleaned_names[:5]):
+            # 테스트용 샘플 PDF URL (실제 DART에서 추출해야 함)
+            # 추후 dart_api에서 rcp_no -> PDF URL로 변환 로직 필요
+            dummy_pdf_url = "https://dart.fss.or.kr/pdf/download/main.do?rcp_no=20240318000018"  # 예시용
+
+            financials = parse_external_audit_pdf(dummy_pdf_url)
+            result = {"사업자명": name}
+            result.update(financials)
+            results.append(result)
+
+            percent = int((i + 1) / total * 100)
+            status_text.markdown(
+                f"🔄 진행률: **{percent}%** | 남은 기업: **{total - i - 1}개**"
+            )
+            progress_bar.progress(percent)
+
+        result_df = pd.DataFrame(results)
+        st.success("✅ 외부감사보고서 파싱 완료")
+        st.dataframe(result_df)
+        st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="audit_report_results.csv")
+
+    else:
+        st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
+
