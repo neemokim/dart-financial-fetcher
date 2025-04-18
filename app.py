@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import datetime
-from open_dart_reader import process_corp_info, get_dart_report_data
 
 st.set_page_config(page_title="DART 재무정보 통합조회기", layout="wide")
 st.title("📊 DART 재무정보 통합조회기")
