@@ -65,7 +65,6 @@ def get_dart_report_data(cleaned_names, year, report_type, api_key):
 
     return pd.DataFrame(results)
 
-    
     corp_list = []
     for corp in root.iter("list"):
         corp_list.append({
