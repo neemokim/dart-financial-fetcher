@@ -60,33 +60,6 @@ st.markdown("""
 api_key = st.secrets["OPEN_DART_API_KEY"]
 corp_list_df = load_corp_list(api_key)  # 💡 이걸 1, 2, 3 메뉴에서 모두 사용
 
-
-st.title("📊 DART 재무정보 통합조회기")
-
-st.markdown("""
-이 앱은 세 가지 기능을 제공합니다:
-1. 사업보고서 기반 일반 재무제표 조회  
-2. 외부감사보고서 재무수치 조회 
-3. 외부감사보고서 웹 크롤링 기반 조회
-
-왼쪽 사이드바에서 원하는 기능을 선택하세요.
-""")
-
-# 함수정의
-def read_uploaded_file(uploaded_file):
-    try:
-        if uploaded_file.name.endswith("csv"):
-            try:
-                return pd.read_csv(uploaded_file, encoding="utf-8")
-            except UnicodeDecodeError:
-                return pd.read_csv(uploaded_file, encoding="cp949")
-        else:
-            return pd.read_excel(uploaded_file)
-    except Exception as e:
-        st.error(f"❌ 파일을 읽을 수 없습니다: {e}")
-        st.stop()
-
-
 api_key = st.secrets["OPEN_DART_API_KEY"]
 
 # 메뉴 선택
