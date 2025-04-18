@@ -108,19 +108,36 @@ elif menu == "📕 외부감사보고서 조회":
         status_text = st.empty()
         total = min(len(cleaned_names), 5)
 
+        # 1. 전체 기업 리스트 불러오기 (zip → xml)
+        api_key = st.secrets["OPEN_DART_API_KEY"]
+        corp_response = requests.get(f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}")
+        with zipfile.ZipFile(io.BytesIO(corp_response.content)) as z:
+            with z.open("CORPCODE.xml") as xml_file:
+                xml_data = xml_file.read().decode("utf-8")
+        root = ET.fromstring(xml_data)
+        corp_list = [
+            {
+                "corp_code": corp.findtext("corp_code"),
+                "corp_name": corp.findtext("corp_name")
+            }
+            for corp in root.iter("list")
+        ]
+        corp_list_df = pd.DataFrame(corp_list)
+
         for i, name in enumerate(cleaned_names[:5]):
-            # 테스트용 샘플 PDF URL (실제 DART에서 추출해야 함)
-            # 추후 dart_api에서 rcp_no -> PDF URL로 변환 로직 필요
-            dummy_pdf_url = "https://dart.fss.or.kr/pdf/download/main.do?rcp_no=20240318000018"  # 예시용
-            rcp_no = "20240318000018"  # 실제로는 나중에 자동화할 값
+            corp_code = get_corp_code(name, corp_list_df)
 
-        try:
-            pdf_url = get_pdf_download_url(rcp_no)
-            financials = parse_external_audit_pdf(pdf_url)
-        except Exception as e:
-            financials = {"오류": str(e)}
+            if not corp_code:
+                results.append({"사업자명": name, "오류": "기업 코드 매칭 실패"})
+                continue
 
-            financials = parse_external_audit_pdf(dummy_pdf_url)
+            try:
+                rcp_no = get_latest_audit_rcp_no(corp_code, api_key)
+                pdf_url = get_pdf_download_url(rcp_no)
+                financials = parse_external_audit_pdf(pdf_url)
+            except Exception as e:
+                financials = {"오류": str(e)}
+
             result = {"사업자명": name}
             result.update(financials)
             results.append(result)
