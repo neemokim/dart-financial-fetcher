@@ -28,6 +28,18 @@ def load_corp_list(api_key):
         for corp in root.iter("list")
     ]
     return pd.DataFrame(corp_list)
+    
+# ✅ API 잔여 호출 횟수 확인 함수
+def check_dart_api_remaining(api_key):
+    """
+    OpenDART API의 잔여 호출 횟수를 반환합니다.
+    """
+    url = f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}"
+    response = requests.head(url)
+
+    remaining = response.headers.get("x-ratelimit-remaining", "알 수 없음")
+    limit = response.headers.get("x-ratelimit-limit", "알 수 없음")
+    return remaining, limit
 
 # ✅ 업로드 파일 읽기 함수
 def read_uploaded_file(uploaded_file):
@@ -59,6 +71,11 @@ corp_list_df = load_corp_list(api_key)
 
 # ✅ 메뉴 및 공통 연도 선택
 menu = st.sidebar.radio("기능 선택", ["📘 사업보고서 조회", "📕 외부감사보고서 조회", "🕸 웹기반 외감보고서 조회"])
+
+# ✅ API 호출 잔여량 표시
+remaining, limit = check_dart_api_remaining(api_key)
+st.sidebar.markdown(f"📊 **잔여 API 호출수:** {remaining} / {limit}")
+
 current_year = datetime.datetime.now().year
 year_options = [str(current_year - i) for i in range(3)]
 year = st.sidebar.selectbox("조회 연도", year_options, index=1, key="global_year")
