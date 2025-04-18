@@ -2,16 +2,75 @@ import streamlit as st
 import pandas as pd
 import datetime
 import time
-import requests  # ← ✅ 이 줄 꼭 있어야 해!
+import requests
 import zipfile
 import io
 import xml.etree.ElementTree as ET
+
 from open_dart_reader import process_corp_info, get_dart_report_data, get_corp_code
 from external_audit_parser import (
     parse_external_audit_pdf,
     get_pdf_download_url,
-    get_latest_audit_rcp_no  # ✅ 이거 빠졌던 거야!
+    get_latest_audit_rcp_no
 )
+from external_web_audit_parser import get_latest_web_rcp_no  # ✅ 웹 기반 외감 함수 추가
+
+# ✅ 기업 리스트를 캐싱하여 한 번만 로딩
+@st.cache_data(show_spinner="📦 DART 기업 리스트 로딩 중...", ttl=3600)
+def load_corp_list(api_key):
+    corp_response = requests.get(f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}")
+    with zipfile.ZipFile(io.BytesIO(corp_response.content)) as z:
+        with z.open("CORPCODE.xml") as xml_file:
+            xml_data = xml_file.read().decode("utf-8")
+    root = ET.fromstring(xml_data)
+    corp_list = [
+        {"corp_code": corp.findtext("corp_code"), "corp_name": corp.findtext("corp_name")}
+        for corp in root.iter("list")
+    ]
+    return pd.DataFrame(corp_list)
+
+# ✅ 파일 업로드 공통 처리 함수
+def read_uploaded_file(uploaded_file):
+    try:
+        if uploaded_file.name.endswith("csv"):
+            try:
+                return pd.read_csv(uploaded_file, encoding="utf-8")
+            except UnicodeDecodeError:
+                return pd.read_csv(uploaded_file, encoding="cp949")
+        else:
+            return pd.read_excel(uploaded_file)
+    except Exception as e:
+        st.error(f"❌ 파일을 읽을 수 없습니다: {e}")
+        st.stop()
+
+# ✅ 앱 기본 설정
+st.set_page_config(page_title="DART 재무정보 통합조회기", layout="wide")
+st.title("📊 DART 재무정보 통합조회기")
+
+st.markdown("""
+이 앱은 세 가지 기능을 제공합니다:
+1. 사업보고서 기반 일반 재무제표 조회  
+2. 외부감사보고서 PDF 수치 조회  
+3. 웹기반 외부감사보고서 재무 수치 크롤링
+
+왼쪽 사이드바에서 원하는 기능을 선택하세요.
+""")
+
+# ✅ API 키 & 기업 리스트 미리 로딩
+api_key = st.secrets["OPEN_DART_API_KEY"]
+corp_list_df = load_corp_list(api_key)  # 💡 이걸 1, 2, 3 메뉴에서 모두 사용
+
+
+st.title("📊 DART 재무정보 통합조회기")
+
+st.markdown("""
+이 앱은 세 가지 기능을 제공합니다:
+1. 사업보고서 기반 일반 재무제표 조회  
+2. 외부감사보고서 재무수치 조회 
+3. 외부감사보고서 웹 크롤링 기반 조회
+
+왼쪽 사이드바에서 원하는 기능을 선택하세요.
+""")
 
 # 함수정의
 def read_uploaded_file(uploaded_file):
@@ -27,35 +86,6 @@ def read_uploaded_file(uploaded_file):
         st.error(f"❌ 파일을 읽을 수 없습니다: {e}")
         st.stop()
 
-
-
-st.set_page_config(page_title="DART 재무정보 통합조회기", layout="wide")
-@st.cache_data(show_spinner="📦 기업 리스트 로딩 중...")  # ✅ Streamlit에서 캐싱!
-def load_corp_list(api_key):
-    corp_response = requests.get(f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}")
-    with zipfile.ZipFile(io.BytesIO(corp_response.content)) as z:
-        with z.open("CORPCODE.xml") as xml_file:
-            xml_data = xml_file.read().decode("utf-8")
-    root = ET.fromstring(xml_data)
-    corp_list = [
-        {"corp_code": corp.findtext("corp_code"), "corp_name": corp.findtext("corp_name")}
-        for corp in root.iter("list")
-    ]
-    return pd.DataFrame(corp_list)
-    
-corp_list_df = load_corp_list(st.secrets["OPEN_DART_API_KEY"])
-
-
-st.title("📊 DART 재무정보 통합조회기")
-
-st.markdown("""
-이 앱은 세 가지 기능을 제공합니다:
-1. 사업보고서 기반 일반 재무제표 조회  
-2. 외부감사보고서 재무수치 조회 
-3. 외부감사보고서 웹 크롤링 기반 조회
-
-왼쪽 사이드바에서 원하는 기능을 선택하세요.
-""")
 
 api_key = st.secrets["OPEN_DART_API_KEY"]
 
