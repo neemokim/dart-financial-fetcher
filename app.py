@@ -35,19 +35,19 @@ if menu == "📘 사업보고서 조회":
 
     uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
         if uploaded_file:
-        try:
-            if uploaded_file.name.endswith("csv"):
-                try:
-                    df = pd.read_csv(uploaded_file, encoding="utf-8")
-                except UnicodeDecodeError:
-                    df = pd.read_csv(uploaded_file, encoding="cp949")
-            else:
-                df = pd.read_excel(uploaded_file)
-        except Exception as e:
-            st.error(f"❌ 파일을 읽을 수 없습니다: {e}")
-            st.stop()
-    
-        cleaned, excluded = process_corp_info(df)
+    try:
+        if uploaded_file.name.endswith("csv"):
+            try:
+                df = pd.read_csv(uploaded_file, encoding="utf-8")
+            except UnicodeDecodeError:
+                df = pd.read_csv(uploaded_file, encoding="cp949")
+        else:
+            df = pd.read_excel(uploaded_file)
+    except Exception as e:
+        st.error(f"❌ 파일을 읽을 수 없습니다: {e}")
+        st.stop()
+
+    cleaned, excluded = process_corp_info(df)
 
 
 
