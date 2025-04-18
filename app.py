@@ -30,6 +30,22 @@ def read_uploaded_file(uploaded_file):
 
 
 st.set_page_config(page_title="DART 재무정보 통합조회기", layout="wide")
+@st.cache_data(show_spinner="📦 기업 리스트 로딩 중...")  # ✅ Streamlit에서 캐싱!
+def load_corp_list(api_key):
+    corp_response = requests.get(f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}")
+    with zipfile.ZipFile(io.BytesIO(corp_response.content)) as z:
+        with z.open("CORPCODE.xml") as xml_file:
+            xml_data = xml_file.read().decode("utf-8")
+    root = ET.fromstring(xml_data)
+    corp_list = [
+        {"corp_code": corp.findtext("corp_code"), "corp_name": corp.findtext("corp_name")}
+        for corp in root.iter("list")
+    ]
+    return pd.DataFrame(corp_list)
+    
+corp_list_df = load_corp_list(st.secrets["OPEN_DART_API_KEY"])
+
+
 st.title("📊 DART 재무정보 통합조회기")
 
 st.markdown("""
