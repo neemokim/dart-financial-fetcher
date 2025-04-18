@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
-from open_dart_reader import process_corp_info, process_external_audit_report, get_dart_report_data
+from opendartreader import process_corp_info, process_external_audit_report, get_dart_report_data
 import datetime
 
 # Streamlit 페이지 설정
