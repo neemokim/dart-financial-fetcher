@@ -89,7 +89,7 @@ def get_pdf_download_url(rcp_no):
 # 📄 "가장 최신 외부감사보고서의 rcp_no를 자동으로 가져오는 함수" 만들어줄게.
 def get_latest_audit_rcp_no(corp_code, api_key):
     """
-    DART 공시 목록에서 '감사'가 포함된 보고서 중 가장 최신 rcp_no를 반환.
+    연도나 보고서 유형 제한 없이 최근 공시 목록 중 '감사'가 포함된 보고서의 rcp_no 추출.
     """
     url = (
         f"https://opendart.fss.or.kr/api/list.json?"
@@ -101,10 +101,11 @@ def get_latest_audit_rcp_no(corp_code, api_key):
         raise Exception(f"공시 목록 조회 실패: {response.get('message')}")
 
     reports = response.get("list", [])
-    
+
     for report in reports:
-        if "감사" in report.get("report_nm", ""):
+        report_nm = report.get("report_nm", "")
+        rcept_dt = report.get("rcept_dt", "")
+        if "감사" in report_nm and rcept_dt.startswith("2024"):
             return report["rcp_no"]
     
-    raise Exception("감사보고서가 없습니다.")
-
+    raise Exception("2024년 감사보고서를 찾을 수 없습니다.")
