@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import datetime
 import time
+import requests
 from open_dart_reader import process_corp_info, get_dart_report_data
 from external_audit_parser import parse_external_audit_pdf
 
