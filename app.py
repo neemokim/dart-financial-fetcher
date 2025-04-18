@@ -112,6 +112,13 @@ elif menu == "📕 외부감사보고서 조회":
             # 테스트용 샘플 PDF URL (실제 DART에서 추출해야 함)
             # 추후 dart_api에서 rcp_no -> PDF URL로 변환 로직 필요
             dummy_pdf_url = "https://dart.fss.or.kr/pdf/download/main.do?rcp_no=20240318000018"  # 예시용
+            rcp_no = "20240318000018"  # 실제로는 나중에 자동화할 값
+
+        try:
+            pdf_url = get_pdf_download_url(rcp_no)
+            financials = parse_external_audit_pdf(pdf_url)
+        except Exception as e:
+            financials = {"오류": str(e)}
 
             financials = parse_external_audit_pdf(dummy_pdf_url)
             result = {"사업자명": name}
