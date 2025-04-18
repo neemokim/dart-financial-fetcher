@@ -19,7 +19,8 @@ def get_latest_web_rcp_no(corp_name):
 
     # 입력값 정제
     cleaned_input = clean_corp_name(corp_name)
-
+    print(f"입력한 기업명: {corp_name}")
+    print(f"정제된 기업명: {cleaned_input}")
     # '보고서명'에 '감사' 포함된 것 중 가장 최근 rcpNo 찾기
     links = soup.select("a[href*='rcpNo']")
     for link in links:
