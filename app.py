@@ -61,8 +61,7 @@ report_types = {
 if menu == "📘 사업보고서 조회":
     st.header("📘 사업보고서 기반 일반 재무제표 조회")
     report_type = st.sidebar.selectbox("보고서 유형", list(report_types.keys()), key="report_type")
-else:
-    report_type = "사업보고서"  # 내부적으로 고정값만 씀
+    #else:
     uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
     if uploaded_file:
         try:
@@ -235,5 +234,4 @@ elif menu == "🕸 웹기반 외감보고서 조회":
         st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="웹기반_외감보고서결과.csv")
     else:
         st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
-else:
-    st.error("알 수 없는 메뉴입니다.")
+
