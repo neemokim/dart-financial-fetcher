@@ -7,6 +7,7 @@ def get_latest_web_rcp_no(corp_name):
     기업명을 기반으로 DART 웹에서 외부감사보고서의 rcpNo를 크롤링한다.
     """
     search_url = f"https://dart.fss.or.kr/dsap001/search.ax?textCrpNm={corp_name}"
+    print(f"🌐 검색 URL: {search_url}")
     resp = requests.get(search_url)
     soup = BeautifulSoup(resp.text, "html.parser")
 
