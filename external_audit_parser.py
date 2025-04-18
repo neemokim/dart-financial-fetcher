@@ -85,3 +85,26 @@ def get_pdf_download_url(rcp_no):
         return pdf_url
     else:
         raise Exception("PDF 링크를 찾을 수 없습니다.")
+
+# 📄 "가장 최신 외부감사보고서의 rcp_no를 자동으로 가져오는 함수" 만들어줄게.
+def get_latest_audit_rcp_no(corp_code, api_key):
+    """
+    DART 공시 목록에서 '감사'가 포함된 보고서 중 가장 최신 rcp_no를 반환.
+    """
+    url = (
+        f"https://opendart.fss.or.kr/api/list.json?"
+        f"crtfc_key={api_key}&corp_code={corp_code}&page_count=100"
+    )
+    response = requests.get(url).json()
+
+    if response.get("status") != "000":
+        raise Exception(f"공시 목록 조회 실패: {response.get('message')}")
+
+    reports = response.get("list", [])
+    
+    for report in reports:
+        if "감사" in report.get("report_nm", ""):
+            return report["rcp_no"]
+    
+    raise Exception("감사보고서가 없습니다.")
+
