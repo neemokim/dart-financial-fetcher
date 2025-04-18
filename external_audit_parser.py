@@ -3,6 +3,7 @@ import re
 import requests
 import os
 from bs4 import BeautifulSoup
+import requests
 
 
 # PDF에서 텍스트 추출
@@ -89,7 +90,8 @@ def get_pdf_download_url(rcp_no):
 # 📄 "가장 최신 외부감사보고서의 rcp_no를 자동으로 가져오는 함수" 만들어줄게.
 def get_latest_audit_rcp_no(corp_code, api_key):
     """
-    연도나 보고서 유형 제한 없이 최근 공시 목록 중 '감사'가 포함된 보고서의 rcp_no 추출.
+    기업코드 기준으로 최근 공시 목록 중 '감사' 포함된 보고서의 rcp_no 반환
+    연도 조건 없이 전체 리스트 중에서 탐색함
     """
     url = (
         f"https://opendart.fss.or.kr/api/list.json?"
@@ -103,12 +105,10 @@ def get_latest_audit_rcp_no(corp_code, api_key):
     reports = response.get("list", [])
 
     for report in reports:
-        report_nm = report.get("report_nm", "")
-        rcept_dt = report.get("rcept_dt", "")
-        if "감사" in report_nm and rcept_dt.startswith("2024"):
+        if "감사" in report.get("report_nm", ""):
             return report["rcp_no"]
-    
-    raise Exception("2024년 감사보고서를 찾을 수 없습니다.")
+
+    raise Exception("감사보고서를 찾을 수 없습니다.")
 
 # 이름 정규화도 포함 연도 조건 없이 감사보고서 자동 탐지
 def normalize_name(name):
