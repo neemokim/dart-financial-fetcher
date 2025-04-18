@@ -1,6 +1,6 @@
 import pandas as pd
 import requests
-from opendartreader_local import OpenDartReader
+from opendartreader import OpenDartReader
 from pdfminer.high_level import extract_text
 
 def process_corp_info(df):
