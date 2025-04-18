@@ -1,6 +1,8 @@
 import pandas as pd
 import re
 import requests
+import zipfile
+import io
 import xml.etree.ElementTree as ET
 
 # (주) 등 제거
@@ -18,19 +20,26 @@ def get_corp_code(corp_name, corp_list_df):
 
 # DART에서 사업보고서 숫자 가져오기
 def get_dart_report_data(cleaned_names, year, report_type, api_key):
-    # 기업 리스트 가져오기 (파일 저장 없이 바로 파싱)
+  # 1. 기업 리스트 가져오기 (ZIP 파일로 응답 옴)
     url = f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}"
     response = requests.get(url)
 
-    # 먼저 텍스트로 읽고, 정상적인 XML인지 확인
-    text = response.content.decode("utf-8", errors="ignore").strip()
+    # 2. ZIP 파일 메모리에서 열기
+    with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+    with z.open("CORPCODE.xml") as xml_file:
+        xml_data = xml_file.read().decode("utf-8")
 
-    # XML이 아닌 경우 에러 반환
-    if not text.startswith("<?xml"):
-        raise ValueError(f"DART에서 받은 기업목록 응답이 XML 형식이 아님:\n{text[:100]}...")
+    # 3. XML 파싱
+    root = ET.fromstring(xml_data)
 
-    # XML 파싱
-    root = ET.fromstring(response.content)
+    # 4. 기업 리스트 정리
+    corp_list = []
+    for corp in root.iter("list"):
+        corp_list.append({
+        "corp_code": corp.findtext("corp_code"),
+        "corp_name": corp.findtext("corp_name")
+        })
+    corp_list_df = pd.DataFrame(corp_list)
 
 
 
