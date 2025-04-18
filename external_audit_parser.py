@@ -9,6 +9,24 @@ def extract_text_from_pdf_url(pdf_url):
     if response.status_code != 200:
         raise Exception("PDF 다운로드 실패")
 
+    # PDF 응답이 맞는지 체크 (응답 헤더 또는 내용 앞부분)
+    if not response.headers["Content-Type"].startswith("application/pdf"):
+        print("❌ PDF 아님! 응답 헤더:", response.headers)
+        print("📦 응답 내용:", response.text[:200])
+        raise Exception("PDF가 아닌 응답이 반환됨")
+
+    temp_filename = "temp.pdf"
+    with open(temp_filename, "wb") as f:
+        f.write(response.content)
+
+    text = ""
+    with fitz.open(temp_filename) as doc:
+        for page in doc:
+            text += page.get_text()
+
+    os.remove(temp_filename)
+    return text
+
     temp_filename = "temp.pdf"
     with open(temp_filename, "wb") as f:
         f.write(response.content)
