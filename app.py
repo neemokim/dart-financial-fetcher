@@ -31,15 +31,13 @@ def load_corp_list(api_key):
     
 # ✅ API 잔여 호출 횟수 확인 함수
 def check_dart_api_remaining(api_key):
-    """
-    OpenDART API의 잔여 호출 횟수를 반환합니다.
-    """
     url = f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}"
-    response = requests.head(url)
+    response = requests.get(url)  # ← GET으로 변경
 
     remaining = response.headers.get("x-ratelimit-remaining", "알 수 없음")
     limit = response.headers.get("x-ratelimit-limit", "알 수 없음")
     return remaining, limit
+
 
 # ✅ 업로드 파일 읽기 함수
 def read_uploaded_file(uploaded_file):
