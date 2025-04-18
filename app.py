@@ -72,7 +72,10 @@ menu = st.sidebar.radio("기능 선택", ["📘 사업보고서 조회", "📕 �
 
 # ✅ API 호출 잔여량 표시
 remaining, limit = check_dart_api_remaining(api_key)
-st.sidebar.markdown(f"📊 **잔여 API 호출수:** {remaining} / {limit}")
+if remaining == "알 수 없음":
+    st.sidebar.markdown("ℹ️ API 사용량 정보는 현재 조회되지 않습니다.")
+else:
+    st.sidebar.markdown(f"📊 **잔여 API 호출수:** {remaining} / {limit}")
 
 current_year = datetime.datetime.now().year
 year_options = [str(current_year - i) for i in range(3)]
