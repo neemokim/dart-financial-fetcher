@@ -44,25 +44,10 @@ report_types = {
     "3분기보고서": "11014"
 }
 if menu == "📘 사업보고서 조회":
+    st.header("📘 사업보고서 기반 일반 재무제표 조회")
     report_type = st.sidebar.selectbox("보고서 유형", list(report_types.keys()), key="report_type")
 else:
     report_type = "사업보고서"  # 내부적으로 고정값만 씀
-
-# 공통 입력
-current_year = datetime.datetime.now().year
-year_options = [str(current_year - i) for i in range(3)]
-year = st.sidebar.selectbox("조회 연도", year_options, index=1)  # 기본값을 작년으로
-report_types = {
-    "사업보고서": "11011",
-    "반기보고서": "11012",
-    "1분기보고서": "11013",
-    "3분기보고서": "11014"
-}
-report_type = st.sidebar.selectbox("보고서 유형", list(report_types.keys()))
-
-if menu == "📘 사업보고서 조회":
-    st.header("📘 사업보고서 기반 일반 재무제표 조회")
-
     uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
     if uploaded_file:
         try:
