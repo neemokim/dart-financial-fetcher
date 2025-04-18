@@ -85,14 +85,14 @@ if menu == "📘 사업보고서 조회":
         st.write("🧹 제거된 문자열 (최대 5개):", list(excluded)[:5])
         st.write("🔍 매칭된 사업자명 (최대 5개):", cleaned.tolist()[:5])
 
-        total = len(cleaned[:5])
+        total = len(cleaned)
         st.info(f"총 {total}개 기업의 재무제표를 조회합니다.")
         progress_bar = st.progress(0)
         status_text = st.empty()
         start_time = time.time()
         results = []
 
-        for i, name in enumerate(cleaned[:5]):
+        for i, name in enumerate(cleaned):
             percent = int((i + 1) / total * 100)
             elapsed = int(time.time() - start_time)
             remaining = int((elapsed / (i + 1)) * (total - i - 1)) if i > 0 else 0
@@ -122,12 +122,12 @@ elif menu == "📕 외부감사보고서 조회":
         cleaned_names, _ = process_corp_info(df)
         st.write("🧹 정제된 기업명 (최대 5개):", cleaned_names[:5].tolist())
 
-        total = len(cleaned_names[:5])
+        total = len(cleaned_names)
         progress_bar = st.progress(0)
         status_text = st.empty()
         results = []
 
-        for i, name in enumerate(cleaned_names[:5]):
+        for i, name in enumerate(cleaned_names):
             corp_code = get_corp_code(name, corp_list_df)
             if not corp_code:
                 results.append({"사업자명": name, "오류": "기업 코드 매칭 실패"})
