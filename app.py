@@ -2,7 +2,10 @@ import streamlit as st
 import pandas as pd
 import datetime
 import time
-import requests
+import requests  # ← ✅ 이 줄 꼭 있어야 해!
+import zipfile
+import io
+import xml.etree.ElementTree as ET
 from open_dart_reader import process_corp_info, get_dart_report_data
 from external_audit_parser import parse_external_audit_pdf
 
