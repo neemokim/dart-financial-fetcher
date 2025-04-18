@@ -7,7 +7,11 @@ import zipfile
 import io
 import xml.etree.ElementTree as ET
 from open_dart_reader import process_corp_info, get_dart_report_data, get_corp_code
-from external_audit_parser import parse_external_audit_pdf
+from external_audit_parser import (
+    parse_external_audit_pdf,
+    get_pdf_download_url,
+    get_latest_audit_rcp_no  # ✅ 이거 빠졌던 거야!
+)
 
 
 st.set_page_config(page_title="DART 재무정보 통합조회기", layout="wide")
