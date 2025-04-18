@@ -13,10 +13,10 @@ from external_audit_parser import (
     get_pdf_download_url,
     get_latest_audit_rcp_no
 )
-from external_web_audit_parser import get_latest_web_rcp_no  # ✅ 웹 기반 외감 함수 추가
+from external_web_audit_parser import get_latest_web_rcp_no  # ✅ 웹기반 함수 추가
 
-# ✅ 기업 리스트를 캐싱하여 한 번만 로딩
-@st.cache_data(show_spinner="📦 DART 기업 리스트 로딩 중...", ttl=3600)
+# ✅ 기업 리스트 캐싱 함수
+@st.cache_data(show_spinner="📦 DART 기업 리스트 불러오는 중...", ttl=3600)
 def load_corp_list(api_key):
     corp_response = requests.get(f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}")
     with zipfile.ZipFile(io.BytesIO(corp_response.content)) as z:
@@ -29,7 +29,7 @@ def load_corp_list(api_key):
     ]
     return pd.DataFrame(corp_list)
 
-# ✅ 파일 업로드 공통 처리 함수
+# ✅ 업로드 파일 읽기 함수
 def read_uploaded_file(uploaded_file):
     try:
         if uploaded_file.name.endswith("csv"):
@@ -43,34 +43,27 @@ def read_uploaded_file(uploaded_file):
         st.error(f"❌ 파일을 읽을 수 없습니다: {e}")
         st.stop()
 
-# ✅ 앱 기본 설정
+# ✅ 기본 설정
 st.set_page_config(page_title="DART 재무정보 통합조회기", layout="wide")
 st.title("📊 DART 재무정보 통합조회기")
 
 st.markdown("""
 이 앱은 세 가지 기능을 제공합니다:
-1. 사업보고서 기반 일반 재무제표 조회  
-2. 외부감사보고서 PDF 수치 조회  
-3. 웹기반 외부감사보고서 재무 수치 크롤링
-
-왼쪽 사이드바에서 원하는 기능을 선택하세요.
+1. 📘 사업보고서 기반 일반 재무제표 조회  
+2. 📕 외부감사보고서 PDF 수치 조회  
+3. 🕸 웹기반 외부감사보고서 수치 조회
 """)
 
-# ✅ API 키 & 기업 리스트 미리 로딩
 api_key = st.secrets["OPEN_DART_API_KEY"]
-corp_list_df = load_corp_list(api_key)  # 💡 이걸 1, 2, 3 메뉴에서 모두 사용
+corp_list_df = load_corp_list(api_key)
 
-api_key = st.secrets["OPEN_DART_API_KEY"]
-
-# 메뉴 선택
+# ✅ 메뉴 및 공통 연도 선택
 menu = st.sidebar.radio("기능 선택", ["📘 사업보고서 조회", "📕 외부감사보고서 조회", "🕸 웹기반 외감보고서 조회"])
-
-# ✅ 공통 연도 (라벨을 메뉴마다 안 바꾸고 하나만 쓰되, ID 충돌 안 나게 name 파라미터 제거)
 current_year = datetime.datetime.now().year
 year_options = [str(current_year - i) for i in range(3)]
 year = st.sidebar.selectbox("조회 연도", year_options, index=1, key="global_year")
 
-# ✅ 보고서 유형은 '📘 사업보고서 조회'일 때만 노출
+# ✅ 보고서 유형 (1번 메뉴에서만 노출)
 report_types = {
     "사업보고서": "11011",
     "반기보고서": "11012",
@@ -78,36 +71,24 @@ report_types = {
     "3분기보고서": "11014"
 }
 if menu == "📘 사업보고서 조회":
-    st.header("📘 사업보고서 기반 일반 재무제표 조회")
     report_type = st.sidebar.selectbox("보고서 유형", list(report_types.keys()), key="report_type")
-    #else:
+else:
+    report_type = "사업보고서"  # 기본값
+
+# ✅ 1. 사업보고서 조회
+if menu == "📘 사업보고서 조회":
+    st.header("📘 사업보고서 기반 일반 재무제표 조회")
     uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
     if uploaded_file:
-        try:
-            # CSV vs Excel 구분 후 인코딩 처리
-            if uploaded_file.name.endswith("csv"):
-                try:
-                    df = pd.read_csv(uploaded_file, encoding="utf-8")
-                except UnicodeDecodeError:
-                    df = pd.read_csv(uploaded_file, encoding="cp949")
-            else:
-                df = pd.read_excel(uploaded_file)
-        except Exception as e:
-            st.error(f"❌ 파일을 읽을 수 없습니다: {e}")
-            st.stop()
-
-        # 파일 전처리
+        df = read_uploaded_file(uploaded_file)
         cleaned, excluded = process_corp_info(df)
         st.write("🧹 제거된 문자열 (최대 5개):", list(excluded)[:5])
         st.write("🔍 매칭된 사업자명 (최대 5개):", cleaned.tolist()[:5])
-        
-        # 진행 상태 표시
+
         total = len(cleaned[:5])
         st.info(f"총 {total}개 기업의 재무제표를 조회합니다.")
-        
         progress_bar = st.progress(0)
         status_text = st.empty()
-
         start_time = time.time()
         results = []
 
@@ -116,9 +97,7 @@ if menu == "📘 사업보고서 조회":
             elapsed = int(time.time() - start_time)
             remaining = int((elapsed / (i + 1)) * (total - i - 1)) if i > 0 else 0
 
-            status_text.markdown(
-                f"🔄 진행률: **{percent}%** | 남은 기업: **{total - i - 1}개** | 예상 남은 시간: **{remaining}초**"
-            )
+            status_text.markdown(f"🔄 진행률: **{percent}%** | 남은 기업: **{total - i - 1}개** | 예상 남은 시간: **{remaining}초**")
             progress_bar.progress(percent)
 
             try:
@@ -131,50 +110,25 @@ if menu == "📘 사업보고서 조회":
         st.success("✅ 전체 기업 조회 완료")
         st.dataframe(result_df)
         st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="dart_재무정보.csv")
-
     else:
         st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
 
+# ✅ 2. 외부감사보고서 PDF 수치 추출
 elif menu == "📕 외부감사보고서 조회":
     st.header("📕 외부감사보고서 기반 PDF 재무 수치 조회")
-    #st.subheader("🔍 지오영 수동 테스트 (테스트용 코드)")
-    #corp_code = "00446716"
-   
     uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
     if uploaded_file:
-        if uploaded_file.name.endswith("csv"):
-            df = pd.read_csv(uploaded_file)
-        else:
-            df = pd.read_excel(uploaded_file)
-
-        # 기업명 전처리
+        df = read_uploaded_file(uploaded_file)
         cleaned_names, _ = process_corp_info(df)
         st.write("🧹 정제된 기업명 (최대 5개):", cleaned_names[:5].tolist())
 
-        results = []
+        total = len(cleaned_names[:5])
         progress_bar = st.progress(0)
         status_text = st.empty()
-        total = min(len(cleaned_names), 5)
-
-        # 1. 전체 기업 리스트 불러오기 (zip → xml)
-        api_key = st.secrets["OPEN_DART_API_KEY"]
-        corp_response = requests.get(f"https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key={api_key}")
-        with zipfile.ZipFile(io.BytesIO(corp_response.content)) as z:
-            with z.open("CORPCODE.xml") as xml_file:
-                xml_data = xml_file.read().decode("utf-8")
-        root = ET.fromstring(xml_data)
-        corp_list = [
-            {
-                "corp_code": corp.findtext("corp_code"),
-                "corp_name": corp.findtext("corp_name")
-            }
-            for corp in root.iter("list")
-        ]
-        corp_list_df = pd.DataFrame(corp_list)
+        results = []
 
         for i, name in enumerate(cleaned_names[:5]):
             corp_code = get_corp_code(name, corp_list_df)
-
             if not corp_code:
                 results.append({"사업자명": name, "오류": "기업 코드 매칭 실패"})
                 continue
@@ -191,28 +145,22 @@ elif menu == "📕 외부감사보고서 조회":
             results.append(result)
 
             percent = int((i + 1) / total * 100)
-            status_text.markdown(
-                f"🔄 진행률: **{percent}%** | 남은 기업: **{total - i - 1}개**"
-            )
+            status_text.markdown(f"🔄 진행률: **{percent}%** | 남은 기업: **{total - i - 1}개**")
             progress_bar.progress(percent)
 
         result_df = pd.DataFrame(results)
-        st.success("✅ 외부감사보고서 파싱 완료")
+        st.success("✅ 외부감사보고서 조회 완료")
         st.dataframe(result_df)
-        st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="audit_report_results.csv")
-
+        st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="외감보고서_재무정보.csv")
     else:
         st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
-elif menu == "🕸 웹기반 외감보고서 조회":
-    st.header("🕸 웹 기반 외부감사보고서 조회")
 
+# ✅ 3. 웹기반 외감보고서 조회
+elif menu == "🕸 웹기반 외감보고서 조회":
+    st.header("🕸 웹 기반 외부감사보고서 수치 조회")
     uploaded_file = st.file_uploader("📂 기업명 파일 업로드 (CSV 또는 Excel)", type=["csv", "xlsx"])
     if uploaded_file:
-        if uploaded_file.name.endswith("csv"):
-            df = pd.read_csv(uploaded_file)
-        else:
-            df = pd.read_excel(uploaded_file)
-
+        df = read_uploaded_file(uploaded_file)
         cleaned, _ = process_corp_info(df)
         st.write("🧹 정제된 기업명 (최대 5개):", cleaned[:5].tolist())
 
@@ -224,6 +172,8 @@ elif menu == "🕸 웹기반 외감보고서 조회":
                 continue
             try:
                 rcp_no = get_latest_web_rcp_no(name)
+                if not rcp_no:
+                    raise ValueError("웹에서 외부감사보고서를 찾을 수 없습니다.")
                 pdf_url = get_pdf_download_url(rcp_no)
                 financials = parse_external_audit_pdf(pdf_url)
             except Exception as e:
@@ -232,13 +182,11 @@ elif menu == "🕸 웹기반 외감보고서 조회":
             result = {"사업자명": name}
             result.update(financials)
             results.append(result)
-
             st.write(f"✅ {name} 처리 완료")
 
         result_df = pd.DataFrame(results)
-        st.success("🧾 전체 기업 처리 완료")
+        st.success("✅ 웹기반 외감보고서 조회 완료")
         st.dataframe(result_df)
-        st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="웹기반_외감보고서결과.csv")
+        st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="웹기반_외감보고서_결과.csv")
     else:
         st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
-
