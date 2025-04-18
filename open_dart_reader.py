@@ -65,7 +65,8 @@ def get_dart_report_data(cleaned_names, year, report_type, api_key):
                 f"?crtfc_key={api_key}&corp_code={corp_code}&bsns_year={year}"
                 f"&reprt_code={report_type}&fs_div={fs_div}"
             )
-            r = requests.get(url).json()       
+            r = requests.get(url).json()   
+            print(f"🔍 기업명: {name}")
             print(f"📡 요청 URL: {url}")
             print(f"📦 응답 결과: {r}")
             if r.get("status") == "000":
