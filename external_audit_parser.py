@@ -109,3 +109,19 @@ def get_latest_audit_rcp_no(corp_code, api_key):
             return report["rcp_no"]
     
     raise Exception("2024년 감사보고서를 찾을 수 없습니다.")
+
+# 이름 정규화도 포함 연도 조건 없이 감사보고서 자동 탐지
+def normalize_name(name):
+    return re.sub(r"[\s㈜(주)주식회사]", "", name.lower())
+
+def get_corp_code(corp_name, corp_list_df):
+    """
+    (주), 공백 등을 제거한 정규화된 이름 기준으로 기업코드 조회
+    """
+    norm_name = normalize_name(corp_name)
+    corp_list_df["norm_name"] = corp_list_df["corp_name"].apply(normalize_name)
+    match = corp_list_df[corp_list_df["norm_name"] == norm_name]
+    if not match.empty:
+        return match.iloc[0]["corp_code"]
+    return None
+
