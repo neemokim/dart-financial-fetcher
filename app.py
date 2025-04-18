@@ -235,4 +235,5 @@ elif menu == "🕸 웹기반 외감보고서 조회":
         st.download_button("⬇️ 결과 다운로드 (CSV)", result_df.to_csv(index=False), file_name="웹기반_외감보고서결과.csv")
     else:
         st.info("📎 CSV 또는 Excel 파일을 업로드해 주세요.")
-
+else:
+    st.error("알 수 없는 메뉴입니다.")
